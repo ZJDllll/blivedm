@@ -19,7 +19,7 @@ TEST_ROOM_IDS = [
 ]
 
 # 这里填一个已登录账号的cookie。不填cookie也可以连接，但是收到弹幕的用户名会打码，UID会变成0
-SESSDATA = ''
+SESSDATA = '91c1de96%2C1717905082%2Cfb153%2Ac2CjB6BW2wlGBNuJHi_-XJ1wILxaKgdbr5AQIIOCRf-55WnoUDoYXjsTnboKvHNb0ZCCESVmxpYzJUbTFuMV90QjR5cmhnM1N5VEVGMHF5NEdvSndjVUtrLVptWjNOemp0N2VxUEtabURMeFRUNDg2dW5VbHp1VUtrZFFhUmd2V3ROcUk1Q0dmS19RIIEC'
 
 session: Optional[aiohttp.ClientSession] = None
 
@@ -28,7 +28,7 @@ async def main():
     init_session()
     try:
         await run_single_client()
-        await run_multi_clients()
+        #await run_multi_clients()
     finally:
         await session.close()
 
@@ -48,15 +48,15 @@ async def run_single_client():
     演示监听一个直播间
     """
     room_id = random.choice(TEST_ROOM_IDS)
-    client = blivedm.BLiveClient(room_id, session=session)
+    client = blivedm.BLiveClient(23167843, session=session)
     handler = MyHandler()
     client.set_handler(handler)
 
     client.start()
     try:
         # 演示5秒后停止
-        await asyncio.sleep(5)
-        client.stop()
+        #await asyncio.sleep(5)
+        #client.stop()
 
         await client.join()
     finally:
