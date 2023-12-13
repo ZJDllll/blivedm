@@ -8,7 +8,7 @@ import aiohttp
 
 import blivedm
 import blivedm.models.web as web_models
-
+import ServerTcp
 # 直播间ID的取值看直播间URL
 TEST_ROOM_IDS = [
     12235923,
@@ -22,7 +22,7 @@ TEST_ROOM_IDS = [
 SESSDATA = '91c1de96%2C1717905082%2Cfb153%2Ac2CjB6BW2wlGBNuJHi_-XJ1wILxaKgdbr5AQIIOCRf-55WnoUDoYXjsTnboKvHNb0ZCCESVmxpYzJUbTFuMV90QjR5cmhnM1N5VEVGMHF5NEdvSndjVUtrLVptWjNOemp0N2VxUEtabURMeFRUNDg2dW5VbHp1VUtrZFFhUmd2V3ROcUk1Q0dmS19RIIEC'
 
 session: Optional[aiohttp.ClientSession] = None
-
+server =ServerTcp.MyServer()
 
 async def main():
     init_session()
@@ -31,6 +31,7 @@ async def main():
         #await run_multi_clients()
     finally:
         await session.close()
+        server.terminate()
 
 
 def init_session():
@@ -48,7 +49,7 @@ async def run_single_client():
     演示监听一个直播间
     """
     room_id = random.choice(TEST_ROOM_IDS)
-    client = blivedm.BLiveClient(23167843, session=session)
+    client = blivedm.BLiveClient(7777, session=session)
     handler = MyHandler()
     client.set_handler(handler)
 
@@ -82,7 +83,6 @@ async def run_multi_clients():
             client.stop_and_close() for client in clients
         ))
 
-
 class MyHandler(blivedm.BaseHandler):
     # # 演示如何添加自定义回调
     # _CMD_CALLBACK_DICT = blivedm.BaseHandler._CMD_CALLBACK_DICT.copy()
@@ -95,20 +95,28 @@ class MyHandler(blivedm.BaseHandler):
 
     def _on_heartbeat(self, client: blivedm.BLiveClient, message: web_models.HeartbeatMessage):
         print(f'[{client.room_id}] 心跳')
+        server.send_to_all_client(f'[{client.room_id}] 心跳')
 
     def _on_danmaku(self, client: blivedm.BLiveClient, message: web_models.DanmakuMessage):
         print(f'[{client.room_id}] {message.uname}：{message.msg}')
+        server.send_to_all_client(f'[{client.room_id}] {message.uname}：{message.msg}')
 
     def _on_gift(self, client: blivedm.BLiveClient, message: web_models.GiftMessage):
         print(f'[{client.room_id}] {message.uname} 赠送{message.gift_name}x{message.num}'
               f' （{message.coin_type}瓜子x{message.total_coin}）')
+        server.send_to_all_client(f'[{client.room_id}] {message.uname} 赠送{message.gift_name}x{message.num}'
+              f' （{message.coin_type}瓜子x{message.total_coin}）')
 
     def _on_buy_guard(self, client: blivedm.BLiveClient, message: web_models.GuardBuyMessage):
         print(f'[{client.room_id}] {message.username} 购买{message.gift_name}')
+        server.send_to_all_client(f'[{client.room_id}] {message.username} 购买{message.gift_name}')
 
     def _on_super_chat(self, client: blivedm.BLiveClient, message: web_models.SuperChatMessage):
         print(f'[{client.room_id}] 醒目留言 ¥{message.price} {message.uname}：{message.message}')
+        server.send_to_all_client(f'[{client.room_id}] 醒目留言 ¥{message.price} {message.uname}：{message.message}')
 
 
 if __name__ == '__main__':
+    server.run()
     asyncio.run(main())
+    
